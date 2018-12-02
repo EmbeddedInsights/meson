@@ -265,7 +265,7 @@ class IARArmLinker(StaticLinker):
         return self.std_args
 
     def get_output_args(self, target):
-        return ['--output %s' % target]
+        return ['-o', target]
 
     def get_buildtype_linker_args(self, buildtype):
         return []

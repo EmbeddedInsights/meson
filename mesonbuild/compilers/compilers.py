@@ -2020,7 +2020,7 @@ class IARArmCompiler:
     def __init__(self, compiler_type):
         if not self.is_cross:
             raise EnvironmentException('iararm supports only cross-compilation.')
-        # Check whether 'rlink.exe' is available in path
+        # Check whether 'ilinkarm.exe' is available in path
         self.linker_exe = os.path.join(os.path.dirname(self.exelist[0]), 'ilinkarm.exe')
         args = '--version'
         try:
@@ -2079,7 +2079,7 @@ class IARArmCompiler:
         return [self.linker_exe]
 
     def get_linker_lib_prefix(self):
-        return '-lib='
+        return ''
 
     def get_coverage_args(self):
         return []

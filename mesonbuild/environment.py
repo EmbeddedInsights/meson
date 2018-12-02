@@ -995,6 +995,8 @@ class Environment:
                 return DLinker(linker, compiler.arch)
             if 'GDC' in out and ' based on D ' in out:
                 return DLinker(linker, compiler.arch)
+            if 'IAR' in out:
+                return IARArmLinker(linker)
             if err.startswith('Renesas') and ('rlink' in linker or 'rlink.exe' in linker):
                 return CcrxLinker(linker)
             if p.returncode == 0:
