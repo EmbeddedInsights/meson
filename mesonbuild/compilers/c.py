@@ -46,6 +46,7 @@ from .compilers import (
     IntelCompiler,
     RunResult,
     CcrxCompiler,
+    IARArmCompiler,
 )
 
 gnu_compiler_internal_libs = ('m', 'c', 'pthread', 'dl', 'rt')
@@ -1653,3 +1654,43 @@ class CcrxCCompiler(CcrxCompiler, CCompiler):
         if path == '':
             path = '.'
         return ['-include=' + path]
+
+class IARArmCCompiler(IARArmCompiler, CCompiler):
+    def __init__(self, exelist, version, compiler_type, is_cross, exe_wrapper=None, **kwargs):
+        CCompiler.__init__(self, exelist, version, is_cross, exe_wrapper, **kwargs)
+        IARArmCompiler.__init__(self, compiler_type)
+
+    # Override CCompiler.get_always_args
+    def get_always_args(self):
+        return []
+
+    def get_options(self):
+        opts = CCompiler.get_options(self)
+        opts.update({'c_std': coredata.UserComboOption('c_std', 'C language standard to use',
+                                                       ['c11', 'c89'],
+                                                       'c11')})
+        return opts
+
+    def get_option_compile_args(self, options):
+        args = []
+        std = options['c_std']
+        if std.value == 'c89':
+            args.append('--c89')
+        return args
+
+    def get_compile_only_args(self):
+        return []
+
+    def get_no_optimization_args(self):
+        return ['-On']
+
+    def get_output_args(self, target):
+        return ['-o', target]
+
+    def get_linker_output_args(self, outputname):
+        return ['-o', outputname]
+
+    def get_include_args(self, path, is_system):
+        if path == '':
+            path = '.'
+        return ['-I ' + path]

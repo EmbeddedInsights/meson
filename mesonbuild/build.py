@@ -1374,6 +1374,9 @@ class Executable(BuildTarget):
             elif ('c' in self.compilers and self.compilers['c'].get_id().startswith('ccrx') or
                   'cpp' in self.compilers and self.compilers['cpp'].get_id().startswith('ccrx')):
                 self.suffix = 'abs'
+            elif ('c' in self.compilers and self.compilers['c'].get_id().startswith('iararm') or
+                  'cpp' in self.compilers and self.compilers['cpp'].get_id().startswith('iararm')):
+                self.suffix = 'out'
             else:
                 self.suffix = ''
         self.filename = self.name

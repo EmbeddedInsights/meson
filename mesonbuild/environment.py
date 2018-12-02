@@ -15,7 +15,7 @@
 import configparser, os, platform, re, sys, shlex, shutil, subprocess
 
 from . import coredata
-from .linkers import ArLinker, ArmarLinker, VisualStudioLinker, DLinker, CcrxLinker
+from .linkers import ArLinker, ArmarLinker, VisualStudioLinker, DLinker, CcrxLinker, IARArmLinker
 from . import mesonlib
 from .mesonlib import MesonException, EnvironmentException, PerMachine, Popen_safe
 from . import mlog
@@ -67,6 +67,7 @@ from .compilers import (
     ValaCompiler,
     VisualStudioCCompiler,
     VisualStudioCPPCompiler,
+    IARArmCCompiler,
 )
 
 build_filename = 'meson.build'
@@ -673,6 +674,10 @@ class Environment:
                 else:
                     compiler_type = CompilerType.ICC_STANDARD
                 cls = IntelCCompiler if lang == 'c' else IntelCPPCompiler
+                return cls(ccache + compiler, version, compiler_type, is_cross, exe_wrap, full_version=full_version)
+            if 'IAR' in out:
+                compiler_type = CompilerType.IARARM_WIN
+                cls = IARArmCCompiler if lang == 'c' else None
                 return cls(ccache + compiler, version, compiler_type, is_cross, exe_wrap, full_version=full_version)
             if 'ARM' in out:
                 compiler_type = CompilerType.ARM_WIN

@@ -166,6 +166,14 @@ msvc_buildtype_args = {'plain': [],
                        'custom': [],
                        }
 
+iararm_buildtype_args = {'plain': [],
+                       'debug': [],
+                       'debugoptimized': [],
+                       'release': [],
+                       'minsize': [],
+                       'custom': [],
+                       }
+
 apple_buildtype_linker_args = {'plain': [],
                                'debug': [],
                                'debugoptimized': [],
@@ -206,6 +214,14 @@ msvc_buildtype_linker_args = {'plain': [],
                               # REF implies ICF.
                               'release': ['/OPT:REF'],
                               'minsize': ['/INCREMENTAL:NO', '/OPT:REF'],
+                              'custom': [],
+                              }
+
+iararm_buildtype_linker_args = {'plain': [],
+                              'debug': [],
+                              'debugoptimized': [],
+                              'release': [],
+                              'minsize': [],
                               'custom': [],
                               }
 
@@ -330,6 +346,14 @@ msvc_optimization_args = {'0': [],
                           's': ['/O1'], # Implies /Os.
                           }
 
+iararm_optimization_args = {'0': ['-On'],
+                          'g': ['-Ol'],
+                          '1': ['-Om'],
+                          '2': ['-Oh'],
+                          '3': ['-Ohs'],
+                          's': ['-Ohz']
+                          }
+
 clike_debug_args = {False: [],
                     True: ['-g']}
 
@@ -338,6 +362,9 @@ msvc_debug_args = {False: [],
 
 ccrx_debug_args = {False: [],
                    True: ['-debug']}
+
+iararm_debug_args = {False: [],
+                   True: ['--debug']}
 
 base_options = {'b_pch': coredata.UserBooleanOption('b_pch', 'Use precompiled headers', True),
                 'b_lto': coredata.UserBooleanOption('b_lto', 'Use link time optimization', False),
@@ -1295,6 +1322,8 @@ class CompilerType(enum.Enum):
 
     CCRX_WIN = 40
 
+    IARARM_WIN = 50
+
     @property
     def is_standard_compiler(self):
         return self.name in ('GCC_STANDARD', 'CLANG_STANDARD', 'ICC_STANDARD')
@@ -1305,7 +1334,7 @@ class CompilerType(enum.Enum):
 
     @property
     def is_windows_compiler(self):
-        return self.name in ('GCC_MINGW', 'GCC_CYGWIN', 'CLANG_MINGW', 'ICC_WIN', 'ARM_WIN', 'CCRX_WIN')
+        return self.name in ('GCC_MINGW', 'GCC_CYGWIN', 'CLANG_MINGW', 'ICC_WIN', 'ARM_WIN', 'CCRX_WIN', 'IARARM_WIN')
 
 
 def get_macos_dylib_install_name(prefix, shlib_name, suffix, soversion):
@@ -1978,6 +2007,100 @@ class CcrxCompiler:
                 i = '-define=' + i[2:]
             if i.startswith('-I'):
                 i = '-include=' + i[2:]
+            if i.startswith('-Wl,-rpath='):
+                continue
+            elif i == '--print-search-dirs':
+                continue
+            elif i.startswith('-L'):
+                continue
+            result.append(i)
+        return result
+
+class IARArmCompiler:
+    def __init__(self, compiler_type):
+        if not self.is_cross:
+            raise EnvironmentException('iararm supports only cross-compilation.')
+        # Check whether 'rlink.exe' is available in path
+        self.linker_exe = os.path.join(os.path.dirname(self.exelist[0]), 'ilinkarm.exe')
+        args = '--version'
+        try:
+            p, stdo, stderr = Popen_safe(self.linker_exe, args)
+        except OSError as e:
+            err_msg = 'Unknown linker\nRunning "{0}" gave \n"{1}"'.format(' '.join([self.linker_exe] + [args]), e)
+            raise EnvironmentException(err_msg)
+        self.id = 'iararm'
+        self.compiler_type = compiler_type
+        # Assembly
+        self.can_compile_suffixes.update('s')
+        default_warn_args = []
+        self.warn_args = {'1': default_warn_args,
+                          '2': default_warn_args + [],
+                          '3': default_warn_args + []}
+
+    def can_linker_accept_rsp(self):
+        return False
+
+    def get_pic_args(self):
+        # PIC support is not enabled by default for CCRX,
+        # if users want to use it, they need to add the required arguments explicitly
+        return []
+
+    def get_buildtype_args(self, buildtype):
+        return iararm_buildtype_args[buildtype]
+
+    def get_buildtype_linker_args(self, buildtype):
+        return iararm_buildtype_linker_args[buildtype]
+
+    # Override CCompiler.get_std_shared_lib_link_args
+    def get_std_shared_lib_link_args(self):
+        return []
+
+    def get_pch_suffix(self):
+        return 'pch'
+
+    def get_pch_use_args(self, pch_dir, header):
+        return []
+
+    # Override CCompiler.get_dependency_gen_args
+    def get_dependency_gen_args(self, outtarget, outfile):
+        return []
+
+    # Override CCompiler.build_rpath_args
+    def build_rpath_args(self, build_dir, from_dir, rpath_paths, build_rpath, install_rpath):
+        return []
+
+    def thread_flags(self, env):
+        return []
+
+    def thread_link_flags(self, env):
+        return []
+
+    def get_linker_exelist(self):
+        return [self.linker_exe]
+
+    def get_linker_lib_prefix(self):
+        return '-lib='
+
+    def get_coverage_args(self):
+        return []
+
+    def get_coverage_link_args(self):
+        return []
+
+    def get_optimization_args(self, optimization_level):
+        return iararm_optimization_args[optimization_level]
+
+    def get_debug_args(self, is_debug):
+        return iararm_debug_args[is_debug]
+
+    @classmethod
+    def unix_args_to_native(cls, args):
+        result = []
+        for i in args:
+            #if i.startswith('-D'):
+            #    i = '-define=' + i[2:]
+            #if i.startswith('-I'):
+            #    i = '-include=' + i[2:]
             if i.startswith('-Wl,-rpath='):
                 continue
             elif i == '--print-search-dirs':

@@ -86,6 +86,8 @@ __all__ = [
     'ValaCompiler',
     'VisualStudioCCompiler',
     'VisualStudioCPPCompiler',
+    'IARArmCompiler',
+    'IARArmCCompiler'
 ]
 
 # Bring symbols from each module into compilers sub-package namespace
@@ -114,6 +116,7 @@ from .compilers import (
     GnuCompiler,
     IntelCompiler,
     CcrxCompiler,
+    IARArmCompiler,
 )
 from .c import (
     CCompiler,
@@ -126,6 +129,7 @@ from .c import (
     IntelCCompiler,
     CcrxCCompiler,
     VisualStudioCCompiler,
+    IARArmCCompiler,
 )
 from .cpp import (
     CPPCompiler,
